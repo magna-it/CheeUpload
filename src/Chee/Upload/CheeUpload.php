@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 * upload for upload files
 * @author Chee
 */
-class Uploader
+class CheeUpload
 {   
 	/**
 	* IoC

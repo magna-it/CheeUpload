@@ -28,9 +28,9 @@ class UploadServiceProvider extends ServiceProvider {
 	 */
 	public function register()
 	{
-		$this->app['upload'] = $this->app->share(function($app)
+		$this->app['chee-upload'] = $this->app->share(function($app)
 		{
-			return new Image($app);
+			return new CheeUpload($app);
 		});
 	}
 
@@ -41,7 +41,7 @@ class UploadServiceProvider extends ServiceProvider {
 	 */
 	public function provides()
 	{
-		return array('upload');
+		return array('chee-upload');
 	}
 
 }
