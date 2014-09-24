@@ -1,4 +1,4 @@
-<?php namespace Chee\Image;
+<?php namespace Chee\Upload;
 use Illuminate\Foundation\Application;
 
 /**
