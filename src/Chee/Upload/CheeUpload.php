@@ -7,10 +7,10 @@ use Illuminate\Foundation\Application;
 */
 class CheeUpload
 {   
-	/**
-	* IoC
-	* @var Illuminate\doundination\Application
-	*/ 
+    /**
+    * IoC
+    * @var Illuminate\doundination\Application
+    */ 
     protected $app;
 
     /**
@@ -140,9 +140,9 @@ class CheeUpload
     {
         $this->file = $this->app['request']->file($inputName);
         $this->inputName = (string) $inputName;
-		$this->fileSize = (int) $this->file->getSize();
-		$this->extension = $this->file->getClientOriginalExtension();
-		$this->setName($fileName);
+        $this->fileSize = (int) $this->file->getSize();
+        $this->extension = $this->file->getClientOriginalExtension();
+        $this->setName($fileName);
     }
     
     /**
@@ -151,15 +151,15 @@ class CheeUpload
     */
     private function setName($name)
     {
-    	if (is_null($name))
-    	{
-    		$this -> name = $this->file->getClientOriginalName();
-    	}
-    	else
-    	{
-    		$this -> name = $name;
-    		$this->setExtension();
-    	}
+        if (is_null($name))
+        {
+            $this -> name = $this->file->getClientOriginalName();
+        }
+        else
+        {
+            $this -> name = $name;
+            $this->setExtension();
+        }
     }
     
     /**
@@ -168,7 +168,7 @@ class CheeUpload
     private function setExtension()
     {
         
-    	$this->name = $this->name . '.' . $this->extension;
+        $this->name = $this->name . '.' . $this->extension;
     }
     
     /**
@@ -177,7 +177,7 @@ class CheeUpload
     */
     public function mimes($mimeType)
     {
-    	$this->allowedTypes = $mimeType;   
+        $this->allowedTypes = $mimeType;   
     }
 
     /**
@@ -240,7 +240,7 @@ class CheeUpload
     */
     public function randomString($val)
     {
-    	$fileParts = pathinfo ($this->name);
+        $fileParts = pathinfo ($this->name);
         $fileParts['filename'] .= self::getRandomString((int) $val);
         $this->name = $fileParts['filename'] . '.' . $this->extension;
     }
@@ -251,7 +251,7 @@ class CheeUpload
     */
     public function getName()
     {
-    	return $this->name;
+        return $this->name;
     }
     
     /**
@@ -315,26 +315,26 @@ class CheeUpload
     */
     public function move($dest)
     {
-    	//if direcory not found create it
-    	if (! file_exists ($dest))
-    	{
-			if(! mkdir($dest,0777,true))
-			{
-				array_push($this->errors, 'directory path is invalid !');
-			}
-		}
+        //if direcory not found create it
+        if (! file_exists ($dest))
+        {
+            if(! mkdir($dest,0777,true))
+            {
+                array_push($this->errors, 'directory path is invalid !');
+            }
+        }
 
-		//if path not have `/` in ends, add this
-		if (! ends_with ($dest, DIRECTORY_SEPARATOR))
-		{
-		    $dest .= DIRECTORY_SEPARATOR;
-		}
-
-    	$this->savePath = $dest;
-    	
+        //if path not have `/` in ends, add this
+        if (! ends_with ($dest, DIRECTORY_SEPARATOR))
+        {
+            $dest .= DIRECTORY_SEPARATOR;
+        }
+        
+        $this->savePath = $dest;
+        
         if ($this->file->move($this->savePath, $this->name))
         {
-        	return $this->savePath . '/' . $this->name;	
+            return $this->savePath . $this->name;   
         }
         else
         {
@@ -349,25 +349,25 @@ class CheeUpload
     */
     public function validation()
     {
-    	//push tmp validation rules to this array 
+        //push tmp validation rules to this array 
         $tmpArray = array();
         //create laravel validation rule from tmpArray
         $rules = array();
 
-    	$postMaxSize = ini_get('post_max_size');
-    	if (! $postMaxSize && ($postMaxSize < $this->fileSize))
-    	{
-    		array_push($this->errors, 'The uploaded file exceeds the post_max_size directive in php.ini');
-    		return false;
-    	}
-    	
-    	if (! $this->file->isValid())
-		{
-			array_push($this->errors, 'this is not a file !');
-		}
+        $postMaxSize = ini_get('post_max_size');
+        if (! $postMaxSize && ($postMaxSize < $this->fileSize))
+        {
+            array_push($this->errors, 'The uploaded file exceeds the post_max_size directive in php.ini');
+            return false;
+        }
+        
+        if (! $this->file->isValid())
+        {
+            array_push($this->errors, 'this is not a file !');
+        }
 
-    	if ($this->allowedTypes)
-    	{
+        if ($this->allowedTypes)
+        {
             if ($this->allowedTypes === 'image')
             {
                 array_push($tmpArray, 'image');
@@ -376,7 +376,7 @@ class CheeUpload
             {
                 array_push($tmpArray, 'mimes:'. $this->allowedTypes);
             }
-    	}
+        }
         if ($this->minHeight)
         {
             $this->addMinHeightRule();
@@ -421,7 +421,7 @@ class CheeUpload
             array_push($this->errors, $validation->messages()->toJson());
             return false;
         }
-    	return true;
+        return true;
     }
 
 
@@ -444,7 +444,7 @@ class CheeUpload
             return true;
         });
     }
-	
+    
     /**
      * add `maxHeight` to laravel rules
      */
