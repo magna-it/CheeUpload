@@ -10,6 +10,6 @@ class CheeUpload extends Facade {
      * @return string
      */
     protected static function getFacadeAccessor() {
-        return 'upload';
+        return 'chee-upload';
     }
 }
