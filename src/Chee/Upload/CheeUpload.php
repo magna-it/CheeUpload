@@ -1,5 +1,6 @@
 <?php namespace Chee\Upload;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\MessageBag;
 
 /**
 * upload for upload files
@@ -35,9 +36,15 @@ class CheeUpload
     * the file's extension 
     * @var string
     */
-    protected $Extension;
+    protected $extension;
 
     /**
+    * the file's mime
+    * @var string
+    */
+    protected $mime;
+
+    /*
     * moved file path 
     * @var string
     */
@@ -45,19 +52,19 @@ class CheeUpload
 
     /**
     * image's width (only for image type)
-    * @var integer
+    * @var int
     */
     protected $width;
 
     /**
     * image's height (only for image type)
-    * @var integer
+    * @var int
     */
     protected $height;
 
     /**
     * the uploaded file size
-    * @var integer
+    * @var int
     */
     protected $fileSize; 
 
@@ -69,40 +76,46 @@ class CheeUpload
 
     /**
     * minHeight property for add to lravel validation rules
-    * @var integer
+    * @var int
     */
     protected $minHeight;
 
     /**
     * maxHeight property for add to lravel validation rules
-    * @var integer
+    * @var int
     */
     protected $maxHeight;
 
     /**
     * minWidth property for add to lravel validation rules
-    * @var integer
+    * @var int
     */
     protected $minWidth;
 
     /**
     * maxWidth property for add to lravel validation rules
-    * @var integer
+    * @var int
     */
     protected $maxWidth;    
 
     /**
     * maxSize validation rule
-    * @var integer
+    * @var int
     */
     protected $maxSize;
 
     /**
     * minSize validation rule
-    * @var integer
+    * @var int
     */
     protected $minSize;
-
+    
+    /**
+     * for add an string to end of file name
+     * @var string
+    */
+    protected $postFix;
+    
     /**
     * errors
     * @var array
@@ -115,6 +128,8 @@ class CheeUpload
     public function __construct(Application $app) 
     {
         $this->app = $app;
+
+        $this->errors = new MessageBag;
     }
     
     /**
@@ -128,6 +143,7 @@ class CheeUpload
         {
             return true;
         }
+        $this->errors->add('file not send !');
         return false;
     }
     
@@ -142,6 +158,7 @@ class CheeUpload
         $this->inputName = (string) $inputName;
         $this->fileSize = (int) $this->file->getSize();
         $this->extension = $this->file->getClientOriginalExtension();
+        $this->mime = $this->file->getMimeType();
         $this->setName($fileName);
     }
     
@@ -153,11 +170,11 @@ class CheeUpload
     {
         if (is_null($name))
         {
-            $this -> name = $this->file->getClientOriginalName();
+            $this->name = $this->file->getClientOriginalName();
         }
         else
         {
-            $this -> name = $name;
+            $this->name = $name;
             $this->setExtension();
         }
     }
@@ -170,7 +187,7 @@ class CheeUpload
         
         $this->name = $this->name . '.' . $this->extension;
     }
-    
+
     /**
     * get allowed types for validation 
     * @param string
@@ -240,9 +257,9 @@ class CheeUpload
     */
     public function randomString($val)
     {
-        $fileParts = pathinfo ($this->name);
-        $fileParts['filename'] .= self::getRandomString((int) $val);
-        $this->name = $fileParts['filename'] . '.' . $this->extension;
+        if(!is_numeric($val))
+            return;
+        $this->postFix = self::getRandomString((int) $val);
     }
     
     /**
@@ -291,12 +308,12 @@ class CheeUpload
     }
 
     /**
-    * return uploaded file extension
+    * return file's mime
     * @return string
     */
-    public function getMimeType()
+    public function getMime()
     {
-        return $this->mimeType;
+        return $this->mime;
     }
 
     /**
@@ -309,6 +326,15 @@ class CheeUpload
     }
 
     /**
+    * get file extension.
+    * @return string.
+    */
+    public function getExtension()
+    {
+        return $this->extension;
+    }
+
+    /**
     * move tmp file to destination path
     * @param string destination path
     * @return string file path
@@ -317,12 +343,8 @@ class CheeUpload
     {
         //if direcory not found create it
         if (! file_exists ($dest))
-        {
             if(! mkdir($dest,0777,true))
-            {
-                array_push($this->errors, 'directory path is invalid !');
-            }
-        }
+                $this->errors->add('directory path is invalid !');
 
         //if path not have `/` in ends, add this
         if (! ends_with ($dest, DIRECTORY_SEPARATOR))
@@ -333,13 +355,10 @@ class CheeUpload
         $this->savePath = $dest;
         
         if ($this->file->move($this->savePath, $this->name))
-        {
             return $this->savePath . $this->name;   
-        }
         else
-        {
-            array_push($this->errors, 'file can not move');
-        } 
+            $this->errors->add('file can not move');
+
        return false ; 
     }
     
@@ -357,24 +376,23 @@ class CheeUpload
         $postMaxSize = ini_get('post_max_size');
         if (! $postMaxSize && ($postMaxSize < $this->fileSize))
         {
-            array_push($this->errors, 'The uploaded file exceeds the post_max_size directive in php.ini');
+            $this->errors->add('The uploaded file exceeds the post_max_size directive in php.ini');
             return false;
         }
         
         if (! $this->file->isValid())
-        {
-            array_push($this->errors, 'this is not a file !');
-        }
+            $this->errors->add('this is not a file !');
 
         if ($this->allowedTypes)
         {
             if ($this->allowedTypes === 'image')
-            {
                 array_push($tmpArray, 'image');
-            }
             else
             {
-                array_push($tmpArray, 'mimes:'. $this->allowedTypes);
+                $allowTypes = $this->allowedTypes;
+                if (is_array($allowTypes))
+                    $allowTypes = implode(',', $allowTypes); //convert array to string
+                array_push($tmpArray, 'mimes:'. $allowTypes);
             }
         }
         if ($this->minHeight)
@@ -398,27 +416,20 @@ class CheeUpload
             array_push($tmpArray, 'maxWidth:'. $this->maxWidth);                       
         }
         if ($this->maxSize)
-        {
             array_push($tmpArray, 'max:'. $this->maxSize);                         
-        }
         
         $rules[$this->inputName] = implode('|', $tmpArray);
         
         $splitInputName = explode('.', $this->inputName);
         if (isset($splitInputName[1]))
-        {
             $input[$this->inputName] = $this->app['request']->file($splitInputName[0])[$splitInputName[1]];    
-        }
         else
-        {
             $input[$this->inputName]  = $this->app['request']->file($splitInputName[0]);
-        }
-        
         
         $validation = $this->app['validator']->make($input, $rules);
         if($validation->fails())
         {
-            array_push($this->errors, $validation->messages()->toJson());
+            $this->errors->merge($validation->messages());
             return false;
         }
         return true;
@@ -434,13 +445,10 @@ class CheeUpload
         {
             list ($imageWidth, $imageHeight) = getimagesize($value);
             if (! $imageHeight)
-            {
                 return false;
-            }
             if ((isset($parameters[0]) && $parameters[0] != 0) && $imageHeight < (int) $this->minHeight)
-            {
                 return false;
-            }
+
             return true;
         });
     }
@@ -455,13 +463,12 @@ class CheeUpload
             list ($imageWidth, $imageHeight) = getimagesize($value);
             if (! $imageHeight)
             {
-                array_push ($this->errors, 'image dimension not found!');
+                $this->errors->add('image dimension not found!');
                 return false;
             }
             if ((isset($parameters[0]) && $parameters[0] != 0) && $imageHeight > (int) $this->maxHeight)
-            {
                 return false;
-            }
+    
             return true;
         });
     }
@@ -475,13 +482,10 @@ class CheeUpload
         {
             list ($imageWidth) = getimagesize($value);
             if (! $imageWidth)
-            {
                 return false;
-            }
             if ((isset($parameters[0]) && $parameters[0] != 0) &&  $imageWidth > (int) $this->maxWidth)
-            {
                 return false;
-            }
+
             return true;
         });
     }
@@ -495,13 +499,10 @@ class CheeUpload
         {
             list ($imageWidth) = getimagesize($value);
             if (! $imageWidth)
-            {
                 return false;
-            }
             if ((isset($parameters[0]) && $parameters[0] != 0) && $imageWidth < (int) $this->minWidth)
-            {
                 return false;
-            }
+
             return true;
         });
     }
@@ -520,8 +521,32 @@ class CheeUpload
      * @param integer length of characters
      * @return string
      */
-    private static function getRandomString($length = 5)
+    public static function getRandomString($length = 5)
     {
         return substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, (int) $length);
     }
+
+    /**
+    * remove directory
+    * @param string directory path
+    * @return bool
+    */
+    public static function deleteDir($dirPath) 
+    {
+        if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') 
+            $dirPath .= '/';
+
+        $files = glob($dirPath . '*', GLOB_MARK);
+        foreach ($files as $file) 
+        {
+            if (is_dir($file)) 
+                self::deleteDir($file);
+            else 
+                unlink($file);
+        }
+        if (rmdir($dirPath))
+             return true;
+        else
+            return false;
+    }   
 }
