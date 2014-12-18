@@ -143,10 +143,15 @@ class CheeUpload
         {
             return true;
         }
-        $this->errors->add('file not send !');
+        $this->pushErrorss('file not send !');
         return false;
     }
     
+    protected function pushError($error)
+    {
+        $this->errors->add($error);
+    }
+
     /**
     * set properties and dependencies 
     * @param input name 
@@ -344,7 +349,7 @@ class CheeUpload
         //if direcory not found create it
         if (! file_exists ($dest))
             if(! mkdir($dest,0777,true))
-                $this->errors->add('directory path is invalid !');
+                $this->pushErrors('directory path is invalid !');
 
         //if path not have `/` in ends, add this
         if (! ends_with ($dest, DIRECTORY_SEPARATOR))
@@ -357,7 +362,7 @@ class CheeUpload
         if ($this->file->move($this->savePath, $this->name))
             return $this->savePath . $this->name;   
         else
-            $this->errors->add('file can not move');
+            $this->pushErrors('file can not move');
 
        return false ; 
     }
@@ -376,12 +381,12 @@ class CheeUpload
         $postMaxSize = ini_get('post_max_size');
         if (! $postMaxSize && ($postMaxSize < $this->fileSize))
         {
-            $this->errors->add('The uploaded file exceeds the post_max_size directive in php.ini');
+            $this->pushErrors('The uploaded file exceeds the post_max_size directive in php.ini');
             return false;
         }
         
         if (! $this->file->isValid())
-            $this->errors->add('this is not a file !');
+            $this->pushErrors('this is not a file !');
 
         if ($this->allowedTypes)
         {
@@ -463,7 +468,7 @@ class CheeUpload
             list ($imageWidth, $imageHeight) = getimagesize($value);
             if (! $imageHeight)
             {
-                $this->errors->add('image dimension not found!');
+                $this->pushErrors('image dimension not found!');
                 return false;
             }
             if ((isset($parameters[0]) && $parameters[0] != 0) && $imageHeight > (int) $this->maxHeight)
