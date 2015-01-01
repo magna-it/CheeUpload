@@ -143,7 +143,7 @@ class CheeUpload
         {
             return true;
         }
-        $this->pushErrorss('file not send !');
+        $this->pushError('file not send !');
         return false;
     }
     
@@ -349,7 +349,7 @@ class CheeUpload
         //if direcory not found create it
         if (! file_exists ($dest))
             if(! mkdir($dest,0777,true))
-                $this->pushErrors('directory path is invalid !');
+                $this->pushError('directory path is invalid !');
 
         //if path not have `/` in ends, add this
         if (! ends_with ($dest, DIRECTORY_SEPARATOR))
@@ -362,7 +362,7 @@ class CheeUpload
         if ($this->file->move($this->savePath, $this->name))
             return $this->savePath . $this->name;   
         else
-            $this->pushErrors('file can not move');
+            $this->pushError('file can not move');
 
        return false ; 
     }
@@ -381,12 +381,12 @@ class CheeUpload
         $postMaxSize = ini_get('post_max_size');
         if (! $postMaxSize && ($postMaxSize < $this->fileSize))
         {
-            $this->pushErrors('The uploaded file exceeds the post_max_size directive in php.ini');
+            $this->pushError('The uploaded file exceeds the post_max_size directive in php.ini');
             return false;
         }
         
         if (! $this->file->isValid())
-            $this->pushErrors('this is not a file !');
+            $this->pushError('this is not a file !');
 
         if ($this->allowedTypes)
         {
@@ -468,7 +468,7 @@ class CheeUpload
             list ($imageWidth, $imageHeight) = getimagesize($value);
             if (! $imageHeight)
             {
-                $this->pushErrors('image dimension not found!');
+                $this->pushError('image dimension not found!');
                 return false;
             }
             if ((isset($parameters[0]) && $parameters[0] != 0) && $imageHeight > (int) $this->maxHeight)
