@@ -115,7 +115,13 @@ class CheeUpload
      * @var string
     */
     protected $postFix;
-    
+
+    /**
+     * a sign for add postFix to file name . for example : '_'
+     * @var string
+     */
+    protected $postFixSign = '_';
+
     /**
     * errors
     * @var array
@@ -176,11 +182,12 @@ class CheeUpload
         if (is_null($name))
         {
             $this->name = $this->file->getClientOriginalName();
+
         }
         else
         {
             $this->name = $name;
-            $this->setExtension();
+            //$this->setExtension();
         }
     }
     
@@ -262,20 +269,28 @@ class CheeUpload
     */
     public function randomString($val)
     {
-        if(!is_numeric($val))
-            return;
-        $this->postFix = self::getRandomString((int) $val);
+        $this->postFix = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, (int) $val); ;
     }
-    
+
+    public function postFixSign($char = '_')
+    {
+        $this->postFixSign = (string) $char;
+    }
+
     /**
-    * return uploaded file name
+    * return uploaded file name with extension
     * @return string
     */
     public function getName()
     {
-        return $this->name;
+        $fileName = $this->name;
+        if(!is_null($this->postFix))
+        {
+            $fileName = $fileName . $this->postFixSign . $this->postFix;
+        }
+        return $fileName . '.' . $this->getExtension();
     }
-    
+
     /**
     * return uploaded image width
     * @return integer
@@ -359,7 +374,7 @@ class CheeUpload
         
         $this->savePath = $dest;
         
-        if ($this->file->move($this->savePath, $this->name))
+        if ($this->file->move($this->savePath, $this->getName()))
             return $this->savePath . $this->name;   
         else
             $this->pushError('file can not move');
@@ -522,13 +537,13 @@ class CheeUpload
     }
 
     /**
-     * generate random characters
-     * @param integer length of characters
+     * return filename random characters
+     *
      * @return string
      */
-    public static function getRandomString($length = 5)
+    public function getRandomString()
     {
-        return substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, (int) $length);
+        return $this->postFix;
     }
 
     /**
@@ -538,6 +553,8 @@ class CheeUpload
     */
     public static function deleteDir($dirPath) 
     {
+        if(! is_dir($dirPath))
+            return;
         if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') 
             $dirPath .= '/';
 
