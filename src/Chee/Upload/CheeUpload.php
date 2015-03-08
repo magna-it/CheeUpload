@@ -149,7 +149,6 @@ class CheeUpload
         {
             return true;
         }
-        $this->pushError('file not send !');
         return false;
     }
     
